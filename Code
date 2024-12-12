@@ -1,0 +1,258 @@
+#include <windows.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <time.h>
+
+#define RETURNTIME 15
+
+char categories[][15] = {"Student", "Teacher", "Staffs"};
+void returnfunc(void);
+void mainmenu(void);
+void addstaff(void);
+void deletestaff(void);
+void editstaff(void);
+void searchstaff(void);
+void viewstaff(void);
+void closeapplication(void);
+int getdata();
+int checkid(int);
+int t(void);
+void Password();
+
+FILE *fp, *ft;
+COORD coord = {0, 0};
+int s;
+char findstaff;
+char password[10] = {"admin"};
+
+struct meroDate {
+    int mm, dd, yy;
+};
+
+struct staff {
+    int id;
+    char stname[20];
+    char name[20];
+    char Address[20];
+    char course[10];
+    int contact;
+    char *cat;
+};
+
+struct staff a;
+
+void gotoxy(int x, int y) {
+    coord.X = x;
+    coord.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
+}
+
+int main() {
+    Password();
+    return 0;
+}
+
+void mainmenu(void) {
+    system("cls");
+    gotoxy(20, 3);
+    printf("College Management System\n");
+    printf("\t\t\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\xdb\n");
+
+    gotoxy(20, 5);
+    printf("<1> Add new Records");
+    gotoxy(20, 7);
+    printf("<2> Remove Records");
+    gotoxy(20, 9);
+    printf("<3> Search Records");
+    gotoxy(20, 11);
+    printf("<4> View Record's list");
+    gotoxy(20, 13);
+    printf("<5> Modify Record");
+    gotoxy(20, 15);
+    printf("<6> Close Application");
+    gotoxy(20, 18);
+    printf("Enter your choice: ");
+
+    switch (getch()) {
+        case '1':
+            addstaff();
+            break;
+        case '2':
+            deletestaff();
+            break;
+        case '3':
+            searchstaff();
+            break;
+        case '4':
+            viewstaff();
+            break;
+        case '5':
+            editstaff();
+            break;
+        case '6':
+            exit(0);
+        default:
+            printf("\n\aWrong Entry!! Please re-enter the correct option\n");
+            getch();
+            mainmenu();
+    }
+}
+
+void addstaff(void) {
+    system("cls");
+    printf("SELECT CATEGORIES\n");
+    printf("<1> Student\n");
+    printf("<2> Teacher\n");
+    printf("<3> Staff\n");
+    printf("<4> Back to main menu\n");
+
+    printf("Enter your choice: ");
+    scanf("%d", &s);
+
+    if (s == 4)
+        mainmenu();
+
+    if (s < 1 || s > 4) {
+        printf("Invalid choice!\n");
+        getch();
+        addstaff();
+        return;
+    }
+
+    fp = fopen("stf.dat", "ab+");
+    if (fp == NULL) {
+        printf("Error opening file!\n");
+        getch();
+        return;
+    }
+
+    if (getdata() == 1) {
+        a.cat = categories[s - 1];
+        fwrite(&a, sizeof(a), 1, fp);
+        fclose(fp);
+
+        printf("\nThe record is successfully saved\n");
+        printf("Save any more? (Y/N): ");
+        if (tolower(getch()) == 'n')
+            mainmenu();
+        else
+            addstaff();
+    } else {
+        fclose(fp);
+    }
+}
+
+void deletestaff(void) {
+    system("cls");
+    int id;
+    char another = 'y';
+
+    while (another == 'y') {
+        printf("Enter the ID to remove: ");
+        scanf("%d", &id);
+
+        fp = fopen("stf.dat", "rb");
+        ft = fopen("temp.dat", "wb");
+
+        if (fp == NULL || ft == NULL) {
+            printf("Error opening file!\n");
+            getch();
+            return;
+        }
+
+        int found = 0;
+
+        while (fread(&a, sizeof(a), 1, fp) == 1) {
+            if (a.id == id) {
+                found = 1;
+                printf("The record is successfully deleted\n");
+            } else {
+                fwrite(&a, sizeof(a), 1, ft);
+            }
+        }
+
+        fclose(fp);
+        fclose(ft);
+
+        remove("stf.dat");
+        rename("temp.dat", "stf.dat");
+
+        if (!found)
+            printf("No record found with the given ID!\n");
+
+        printf("Delete another record? (Y/N): ");
+        another = tolower(getch());
+    }
+    mainmenu();
+}
+
+void returnfunc(void) {
+    printf("\nPress ENTER to return to main menu");
+    while (getch() != 13)
+        ;
+    mainmenu();
+}
+
+int getdata() {
+    int id;
+    printf("Enter the Information Below\n");
+    printf("ID: ");
+    scanf("%d", &id);
+
+    if (checkid(id) == 0) {
+        printf("\n\aThe ID already exists!\n");
+        return 0;
+    }
+
+    a.id = id;
+    printf("Name: ");
+    scanf("%s", a.name);
+    printf("Address: ");
+    scanf("%s", a.Address);
+    printf("Contact: ");
+    scanf("%d", &a.contact);
+    printf("Course: ");
+    scanf("%s", a.course);
+
+    return 1;
+}
+
+int checkid(int id) {
+    rewind(fp);
+    while (fread(&a, sizeof(a), 1, fp) == 1) {
+        if (a.id == id)
+            return 0;
+    }
+    return 1;
+}
+
+void Password(void) {
+    char pass[10];
+    char ch;
+    int i = 0;
+
+    system("cls");
+    printf("\t\tCollege Management System\n");
+    printf("\n\nEnter Password: ");
+
+    while ((ch = getch()) != 13) {
+        if (ch != 8) {
+            pass[i++] = ch;
+            printf("*");
+        }
+    }
+    pass[i] = '\0';
+
+    if (strcmp(pass, password) == 0) {
+        printf("\n\nPassword matched!\n");
+        printf("Press any key to continue...");
+        getch();
+        mainmenu();
+    } else {
+        printf("\n\n\aIncorrect Password!\n");
+        getch();
+        Password();
+    }
+}
